@@ -72,21 +72,36 @@ class GTFSImporter:
         return extract_dir
 
     def import_gtfs(self, gtfs_path: Path):
-        txt_files = glob.glob(str(pathlib.Path(gtfs_path) / "*.txt"))
-        cmd1 = [
-            str(self.config.binary_path),
-            *txt_files,
-        ]
-        cmd2 = ["psql", str(self.config.db_url), "-b"]
+        txt_files = list(gtfs_path.glob("*.txt"))
+        if not txt_files:
+            raise FileNotFoundError(f"No .txt files found in {gtfs_path}")
 
-        process1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
-        process2 = subprocess.Popen(cmd2, stdin=process1.stdout)
-        if process1.stdout is not None:
-            process1.stdout.close()
-        return_code = process2.wait()
+        cmd1 = [str(self.config.binary_path), *txt_files]
+        cmd2 = ["sponge"]
+        cmd3 = ["psql", str(self.config.db_url), "-b"]
 
-        if return_code != 0:
-            raise subprocess.CalledProcessError(return_code, cmd2)
+        try:
+            with (
+                subprocess.Popen(cmd1, stdout=subprocess.PIPE) as process1,
+                subprocess.Popen(
+                    cmd2, stdin=process1.stdout, stdout=subprocess.PIPE
+                ) as process2,
+                subprocess.Popen(cmd3, stdin=process2.stdout) as process3,
+            ):
+                if process1.stdout:
+                    process1.stdout.close()
+                if process2.stdout:
+                    process2.stdout.close()
+
+                return_code = process3.wait()
+                if return_code != 0:
+                    raise subprocess.CalledProcessError(
+                        return_code,
+                        f"Pipeline failed: {' | '.join([' '.join(cmd1), ' '.join(cmd2), ' '.join(cmd3)])}",
+                    )
+
+        except OSError as e:
+            raise OSError(f"Failed to execute pipeline: {e}")
 
     def run(self):
         try:
