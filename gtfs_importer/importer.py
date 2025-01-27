@@ -101,17 +101,11 @@ class GTFSImporter:
 
 if __name__ == "__main__":
     config = Config(
-        gtfs_url=(
-            os.environ["GTFS_URL"]
-            if os.environ["GTFS_URL"] is not None
-            else GTFS_DATA_URL
-        ),
+        gtfs_url=os.environ.get("GTFS_URL", GTFS_DATA_URL),
         output_dir=Path(os.getenv("OUTPUT_DIR", "/tmp/gtfs")),
         binary_path=Path(os.getenv("BINARY_PATH", "/usr/local/bin/gtfs-via-postgres")),
-        binary_url=(
-            os.environ["GTFS_TO_POSTGRES_BINARY_URL"]
-            if os.environ["GTFS_TO_POSTGRES_BINARY_URL"]
-            else GTFS_TO_POSTGRES_BINARY_URL
+        binary_url=os.environ.get(
+            "GTFS_TO_POSTGRES_BINARY_URL", GTFS_TO_POSTGRES_BINARY_URL
         ),
         db_url=os.environ["DATABASE_URL"],
     )
