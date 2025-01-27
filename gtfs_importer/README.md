@@ -1,2 +1,2 @@
 # gtfs_importer
-Python script using gtfs_importer CLI utility to fetch MPK Wrocław data. Data is updated hourly so cron job should be ran accordingly.
+Uses [gtfs-via-potgres](https://github.com/public-transport/gtfs-via-postgres) CLI utility to fetch MPK Wrocław GTFS-compatible schedule data into PostgreSQL database. Data is updated hourly so cron job should be ran accordingly.

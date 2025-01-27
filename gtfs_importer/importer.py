@@ -1,24 +1,29 @@
-#!/usr/bin/env python3
+import glob
 import logging
 import os
-import shutil
+import pathlib
 import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from zipfile import ZipFile
 
 import requests
 from rich.console import Console
 from rich.logging import RichHandler
 
-GTFS_BINARY_URL = "https://github.com/public-transport/gtfs-via-postgres/releases/download/4.10.2/gtfs-via-postgres-linux-x64"
+GTFS_TO_POSTGRES_BINARY_URL = "https://github.com/public-transport/gtfs-via-postgres/releases/download/4.10.2/gtfs-via-postgres-linux-x64"
+GTFS_DATA_URL = "https://www.wroclaw.pl/open-data/87b09b32-f076-4475-8ec9-6020ed1f9ac0/OtwartyWroclaw_rozklad_jazdy_GTFS.zip"
+
 
 @dataclass
 class Config:
     gtfs_url: str
     output_dir: Path
+    binary_url: str
     binary_path: Path
     db_url: str
+
 
 class GTFSImporter:
     def __init__(self, config: Config):
@@ -30,16 +35,16 @@ class GTFSImporter:
         logging.basicConfig(
             level=logging.INFO,
             format="%(message)s",
-            handlers=[RichHandler(console=self.console)]
+            handlers=[RichHandler(console=self.console)],
         )
         self.logger = logging.getLogger("gtfs_importer")
 
-    def ensure_binary(self):
+    def ensure_binary(self) -> None:
         if not self.config.binary_path.exists():
             self.logger.info("Downloading gtfs-via-postgres...")
-            response = requests.get(GTFS_BINARY_URL)
+            response = requests.get(self.config.binary_url)
             response.raise_for_status()
-            
+
             self.config.binary_path.write_bytes(response.content)
             self.config.binary_path.chmod(0o755)
 
@@ -47,28 +52,40 @@ class GTFSImporter:
         self.logger.info("Downloading GTFS data...")
         response = requests.get(self.config.gtfs_url, stream=True)
         response.raise_for_status()
-        
+
         zip_path = self.config.output_dir / "gtfs.zip"
         with open(zip_path, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
+
+        with ZipFile(zip_path) as zf:
+            if zf.testzip() is not None:
+                raise ValueError("Downloaded zip file is corrupted")
+
         return zip_path
 
     def extract_gtfs(self, zip_path: Path) -> Path:
         extract_dir = self.config.output_dir / "gtfs"
-        shutil.unpack_archive(zip_path, extract_dir)
+        with ZipFile(zip_path) as zf:
+            zf.extractall(extract_dir)
         return extract_dir
 
     def import_gtfs(self, gtfs_path: Path):
-        cmd = [
+        txt_files = glob.glob(str(pathlib.Path(gtfs_path) / "*.txt"))
+        cmd1 = [
             str(self.config.binary_path),
-            "--database", self.config.db_url,
-            str(gtfs_path)
+            *txt_files,
         ]
-        
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        if result.returncode != 0:
-            raise RuntimeError(f"Import failed: {result.stderr}")
+        cmd2 = ["psql", str(self.config.db_url), "-b"]
+
+        process1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
+        process2 = subprocess.Popen(cmd2, stdin=process1.stdout)
+        if process1.stdout is not None:
+            process1.stdout.close()
+        return_code = process2.wait()
+
+        if return_code != 0:
+            raise subprocess.CalledProcessError(return_code, cmd2)
 
     def run(self):
         try:
@@ -81,16 +98,26 @@ class GTFSImporter:
             self.logger.error(f"GTFS import failed: {e}")
             sys.exit(1)
 
+
 if __name__ == "__main__":
     config = Config(
-        gtfs_url=os.environ["GTFS_URL"],
+        gtfs_url=(
+            os.environ["GTFS_URL"]
+            if os.environ["GTFS_URL"] is not None
+            else GTFS_DATA_URL
+        ),
         output_dir=Path(os.getenv("OUTPUT_DIR", "/tmp/gtfs")),
         binary_path=Path(os.getenv("BINARY_PATH", "/usr/local/bin/gtfs-via-postgres")),
-        db_url=os.environ["DATABASE_URL"]
+        binary_url=(
+            os.environ["GTFS_TO_POSTGRES_BINARY_URL"]
+            if os.environ["GTFS_TO_POSTGRES_BINARY_URL"]
+            else GTFS_TO_POSTGRES_BINARY_URL
+        ),
+        db_url=os.environ["DATABASE_URL"],
     )
 
-    if not config.gtfs_url or not config.db_url:
-        logging.error("GTFS_URL and DATABASE_URL environment variables are required")
+    if not config.gtfs_url or not config.db_url or not config.binary_url:
+        logging.error("DATABASE_URL environment variable is required")
         sys.exit(1)
 
     importer = GTFSImporter(config)
