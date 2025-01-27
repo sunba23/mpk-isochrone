@@ -53,6 +53,7 @@ class GTFSImporter:
         response = requests.get(self.config.gtfs_url, stream=True)
         response.raise_for_status()
 
+        os.mkdir(self.config.output_dir)
         zip_path = self.config.output_dir / "gtfs.zip"
         with open(zip_path, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
@@ -103,7 +104,7 @@ if __name__ == "__main__":
     config = Config(
         gtfs_url=os.environ.get("GTFS_URL", GTFS_DATA_URL),
         output_dir=Path(os.getenv("OUTPUT_DIR", "/tmp/gtfs")),
-        binary_path=Path(os.getenv("BINARY_PATH", "/usr/local/bin/gtfs-via-postgres")),
+        binary_path=Path(os.getenv("BINARY_PATH", "~/gtfs-via-postgres")).expanduser(),
         binary_url=os.environ.get(
             "GTFS_TO_POSTGRES_BINARY_URL", GTFS_TO_POSTGRES_BINARY_URL
         ),
