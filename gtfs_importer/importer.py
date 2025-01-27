@@ -53,7 +53,8 @@ class GTFSImporter:
         response = requests.get(self.config.gtfs_url, stream=True)
         response.raise_for_status()
 
-        os.mkdir(self.config.output_dir)
+        if not os.path.isdir(self.config.output_dir):
+            os.mkdir(self.config.output_dir)
         zip_path = self.config.output_dir / "gtfs.zip"
         with open(zip_path, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
@@ -76,7 +77,7 @@ class GTFSImporter:
         if not txt_files:
             raise FileNotFoundError(f"No .txt files found in {gtfs_path}")
 
-        cmd1 = [str(self.config.binary_path), *txt_files]
+        cmd1 = [str(self.config.binary_path), "-u", *txt_files]
         cmd2 = ["sponge"]
         cmd3 = ["psql", str(self.config.db_url), "-b"]
 
