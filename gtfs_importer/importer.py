@@ -70,6 +70,11 @@ class GTFSImporter:
             zf.extractall(extract_dir)
         return extract_dir
 
+    def create_extensions(self):
+        # connect to db (privileged postgres acc needed) and create extensions: postgis, pgrouting
+        # before running script, make sure postGIS and pgRouting are installed on system
+        pass
+
     def import_gtfs(self, gtfs_path: Path):
         txt_files = list(gtfs_path.glob("*.txt"))
         if not txt_files:
@@ -105,6 +110,7 @@ class GTFSImporter:
     def run(self):
         try:
             self.ensure_binary()
+            self.create_extensions()
             zip_path = self.download_gtfs()
             gtfs_path = self.extract_gtfs(zip_path)
             self.import_gtfs(gtfs_path)
