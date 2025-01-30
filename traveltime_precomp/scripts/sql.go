@@ -4,8 +4,8 @@ var (
 	st1 = `
 		CREATE TABLE IF NOT EXISTS route_edges (
 			id SERIAL PRIMARY KEY,
-			source INT,
-			target INT,
+			source TEXT,
+			target TEXT,
 			travel_time INT,
 			CONSTRAINT fk_source FOREIGN KEY (source) REFERENCES stops(stop_id),
 			CONSTRAINT fk_target FOREIGN KEY (target) REFERENCES stops(stop_id)

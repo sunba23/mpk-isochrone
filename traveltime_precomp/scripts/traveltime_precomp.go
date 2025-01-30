@@ -7,7 +7,7 @@ import (
 )
 
 func RunPrecomputation() {
-	var config Config
+	var config Config = *GetConfig()
 	psqlconn := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		config.Host,
