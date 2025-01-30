@@ -43,11 +43,15 @@ var (
   FROM stops start,
   LATERAL (
     SELECT * FROM pgr_dijkstra(
-      'SELECT id, NULLIF(source, '')::int, NULLIF(target, '')::int, travel_time AS cost FROM route_edges',
+      'SELECT id,
+              source::integer as source,
+              target::integer as target,
+              travel_time AS cost
+       FROM route_edges',
       start.stop_id::int,
       ARRAY(SELECT stop_id FROM stops WHERE stop_id != start.stop_id),
       directed := true
     )
   ) AS result;
-	`
+  `
 )
