@@ -3,7 +3,7 @@ package models
 type TravelData struct {
 	Id         int
 	TravelTime int
-	Path       []int
+	Path       []int64
 }
 
 type StopData struct {

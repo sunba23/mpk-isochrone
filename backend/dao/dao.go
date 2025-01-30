@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 	"github.com/sunba23/mpkIsoEngine/models"
 )
@@ -40,9 +41,9 @@ func GetTravelData(stopId int) (map[int]models.TravelData, error) {
 
 	for rows.Next() {
 		var fromStopId, toStopId, travelTime int
-		var routeStops []int
+		var routeStops []int64
 
-		err := rows.Scan(&toStopId, &travelTime, &routeStops)
+		err := rows.Scan(&toStopId, &travelTime, pq.Array(&routeStops))
 		CheckError(err)
 
 		travelDataMap[fromStopId] = models.TravelData{
