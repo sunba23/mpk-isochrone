@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -27,6 +28,8 @@ func travelData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	stopTravelData, err := dao.GetTravelData(stopId)
+	log.Println("in travelData after GetTravelData")
+	log.Println(stopTravelData)
 
 	if err != nil {
 		http.Error(w, "Internal server error.", http.StatusInternalServerError)
@@ -38,5 +41,11 @@ func travelData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("Error encoding response: %v", err)
+		http.Error(w, "Error encoding response", http.StatusInternalServerError)
+		return
+	}
 }
