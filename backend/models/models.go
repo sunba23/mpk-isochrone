@@ -7,8 +7,8 @@ type TravelData struct {
 }
 
 type StopData struct {
-	Id       int
-	Code     int
-	Name     string
-	Location []byte
+  Id       string `json:"id"`
+  Code     string `json:"stop_code"`
+  Name     string `json:"stop_name"`
+  Location []byte `json:"stop_location"`
 }

@@ -69,3 +69,58 @@ func CheckError(err error) {
 		panic(err)
 	}
 }
+
+func GetStopsDetails() (map[string][]byte, error){
+	var config Config = *GetConfig()
+	psqlconn := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		config.Host,
+		config.Port,
+		config.User,
+		config.Password,
+		config.DBName)
+
+	db, err := sql.Open("postgres", psqlconn)
+	CheckError(err)
+	defer db.Close()
+
+	err = db.Ping()
+	CheckError(err)
+
+	statement := `
+  SELECT stop_id, stop_code, stop_name, stop_loc
+  FROM stops;
+  `
+
+	rows, err := db.Query(statement)
+	CheckError(err)
+	defer rows.Close()
+
+	stopsDetailsMap := make(map[string][]byte)
+
+	for rows.Next() {
+		var stopId string
+    var stopCode string
+    var stopName string
+    var stopLoc []byte
+
+		err := rows.Scan(&stopId, &stopCode, &stopName, &stopLoc)
+		CheckError(err)
+
+		stopsDetailsMapJson, err := json.Marshal(models.StopData{
+      Id: stopId,
+      Code: stopCode,
+      Name: stopName,
+      Location: stopLoc,
+		})
+
+		stopsDetailsMap[stopId] = stopsDetailsMapJson
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Fatal("Error iterating through rows: ", err)
+		return nil, err
+	}
+
+	return stopsDetailsMap, nil
+}
