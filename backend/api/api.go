@@ -10,6 +10,7 @@ import (
 )
 
 type travelDataResponse struct {
+	code                int
 	stopIdTravelDataMap map[int]models.TravelData
 }
 
@@ -33,8 +34,10 @@ func travelData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := travelDataResponse{
+		code:                http.StatusOK,
 		stopIdTravelDataMap: stopTravelData,
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
