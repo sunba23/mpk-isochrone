@@ -6,12 +6,11 @@ import (
 	"strconv"
 
 	"github.com/sunba23/mpkIsoEngine/dao"
-	"github.com/sunba23/mpkIsoEngine/models"
 )
 
 type travelDataResponse struct {
 	code                int
-	stopIdTravelDataMap map[int]models.TravelData
+	stopIdTravelDataMap map[int][]byte
 }
 
 func travelData(w http.ResponseWriter, r *http.Request) {

@@ -8,8 +8,8 @@ import (
 func Run() {
 	// wrap travelTimesAndRoute in middleware(s)
 	timeRouteHandler := restrictMethod(http.MethodGet, stripSlashes(http.HandlerFunc(travelData)))
-  // register the handler(s)
+	// register the handler(s)
 	http.Handle("/traveldata", timeRouteHandler)
-  // run server
+	// run server
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

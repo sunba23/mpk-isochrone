@@ -2,6 +2,7 @@ package dao
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -10,7 +11,7 @@ import (
 	"github.com/sunba23/mpkIsoEngine/models"
 )
 
-func GetTravelData(stopId int) (map[int]models.TravelData, error) {
+func GetTravelData(stopId int) (map[int][]byte, error) {
 	var config Config = *GetConfig()
 	psqlconn := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
@@ -37,20 +38,22 @@ func GetTravelData(stopId int) (map[int]models.TravelData, error) {
 	CheckError(err)
 	defer rows.Close()
 
-	travelDataMap := make(map[int]models.TravelData)
+	travelDataMap := make(map[int][]byte)
 
 	for rows.Next() {
-		var fromStopId, toStopId, travelTime int
+		var toStopId, travelTime int
 		var routeStops []int64
 
 		err := rows.Scan(&toStopId, &travelTime, pq.Array(&routeStops))
 		CheckError(err)
 
-		travelDataMap[fromStopId] = models.TravelData{
+		travelDataMapJson, err := json.Marshal(models.TravelData{
 			Id:         toStopId,
 			TravelTime: travelTime,
 			Path:       routeStops,
-		}
+		})
+
+		travelDataMap[toStopId] = travelDataMapJson
 	}
 
 	if err := rows.Err(); err != nil {
