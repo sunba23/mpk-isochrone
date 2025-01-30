@@ -33,8 +33,12 @@ func RunPrecomputation() {
 	_, err = db.Exec(st2)
 	CheckError(err)
 
-	fmt.Println("Creating precomputed_travel_times table...")
+	fmt.Println("Creating zero-cost edges (a.k.a. transfers) for same name stops...")
 	_, err = db.Exec(st3)
+	CheckError(err)
+
+	fmt.Println("Creating precomputed_travel_times table...")
+	_, err = db.Exec(st4)
 	CheckError(err)
 
   fmt.Println("Done.")
