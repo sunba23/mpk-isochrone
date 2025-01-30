@@ -10,8 +10,8 @@ import (
 )
 
 type travelDataResponse struct {
-	code                int
-	stopIdTravelDataMap map[int][]byte
+	Code                int            `json:"code"`
+	StopIdTravelDataMap map[int][]byte `json:"stop_id_travel_data_map"`
 }
 
 func travelData(w http.ResponseWriter, r *http.Request) {
@@ -28,16 +28,14 @@ func travelData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	stopTravelData, err := dao.GetTravelData(stopId)
-	log.Println("in travelData after GetTravelData")
-	log.Println(stopTravelData)
 
 	if err != nil {
 		http.Error(w, "Internal server error.", http.StatusInternalServerError)
 	}
 
 	response := travelDataResponse{
-		code:                http.StatusOK,
-		stopIdTravelDataMap: stopTravelData,
+		Code:                http.StatusOK,
+		StopIdTravelDataMap: stopTravelData,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

@@ -61,7 +61,6 @@ func GetTravelData(stopId int) (map[int][]byte, error) {
 		return nil, err
 	}
 
-  log.Println(travelDataMap)
 	return travelDataMap, nil
 }
 
