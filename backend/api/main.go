@@ -6,10 +6,10 @@ import (
 )
 
 func Run() {
-	// wrap travelTimes in middleware(s)
-	travelHandler := restrictMethod(http.MethodGet, stripSlashes(http.HandlerFunc(travelTimes)))
+	// wrap travelTimesAndRoute in middleware(s)
+	timeRouteHandler := restrictMethod(http.MethodGet, stripSlashes(http.HandlerFunc(travelData)))
   // register the handler(s)
-	http.Handle("/traveltime/{stop_id}", travelHandler)
+	http.Handle("/traveldata", timeRouteHandler)
   // run server
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
