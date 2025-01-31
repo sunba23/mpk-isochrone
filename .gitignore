@@ -1,3 +1,5 @@
 data/transport_data
 gtfs_importer/.venv/
 .env
+frontend/node_modules
+frontend/dist

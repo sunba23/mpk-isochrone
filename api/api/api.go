@@ -51,7 +51,7 @@ func travelData(w http.ResponseWriter, r *http.Request) {
 		if err := json.Unmarshal([]byte(cachedData), &stopTravelDataMap); err != nil {
 			log.Printf("Error unmarshaling cached data: %v", err)
 		} else {
-      log.Printf("Using value for key %v.", cacheKey)
+      log.Printf("Using cached value for key %v.", cacheKey)
 			response := travelDataResponse{
 				Code:                http.StatusOK,
 				StopIdTravelDataMap: stopTravelDataMap,
@@ -80,7 +80,7 @@ func travelData(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-  log.Printf("Responding for key %v.", cacheKey)
+  log.Printf("Using NOT cached value for key %v.", cacheKey)
 	response := travelDataResponse{
 		Code:                http.StatusOK,
 		StopIdTravelDataMap: stopTravelDataMap,
@@ -101,7 +101,7 @@ func stopsDetails(w http.ResponseWriter, _ *http.Request) {
 		if err := json.Unmarshal([]byte(cachedData), &stopsDetailsMap); err != nil {
 			log.Printf("Error unmarshaling cached data: %v", err)
 		} else {
-      log.Printf("Responding with cached value for key %v.", cacheKey)
+      log.Printf("Using cached value for key %v.", cacheKey)
 			response := stopsDetailsResponse{
 				Code:           200,
 				StopDetailsMap: stopsDetailsMap,
@@ -127,7 +127,7 @@ func stopsDetails(w http.ResponseWriter, _ *http.Request) {
 		}
 	}
 
-  log.Printf("Responding for key %v.", cacheKey)
+  log.Printf("Using NOT cached value for key %v.", cacheKey)
 	response := stopsDetailsResponse{
 		Code:           http.StatusOK,
 		StopDetailsMap: stopsDetailsMap,

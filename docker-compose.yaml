@@ -24,6 +24,15 @@ services:
     networks:
       - mpkisonet
 
+  frontend:
+    build: frontend/
+    ports:
+      - 3000:3000
+    networks:
+      - mpkisonet
+    depends_on:
+      - api
+
 networks:
   mpkisonet:
     driver: bridge

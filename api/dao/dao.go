@@ -85,7 +85,7 @@ func GetStopsDetails() (map[string]models.StopData, error) {
 	CheckError(err)
 
 	statement := `
-  SELECT stop_id, stop_code, stop_name, stop_loc
+  SELECT stop_id, stop_code, stop_name, ST_AsEWKB(stop_loc::geometry)
   FROM stops;
   `
 
