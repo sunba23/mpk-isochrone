@@ -1,0 +1,32 @@
+services:
+  api:
+    build: api/
+    ports:
+      - 8080:8080
+    environment:
+      REDIS_URL: redis:6379
+    env_file:
+      - ".env"
+    depends_on:
+      - redis
+    networks:
+      - mpkisonet
+
+  redis:
+    image: redis:7.4
+    ports:
+      - 6379:6379
+    env_file:
+      - ".env"
+    volumes:
+      - redis-data:/data
+    command: sh -c "redis-server --bind 0.0.0.0 --maxmemory 500mb --requirepass $$REDIS_PASSWORD"
+    networks:
+      - mpkisonet
+
+networks:
+  mpkisonet:
+    driver: bridge
+
+volumes:
+  redis-data:

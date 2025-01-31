@@ -2,7 +2,6 @@ package dao
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
 
@@ -11,7 +10,7 @@ import (
 	"github.com/sunba23/mpkIsoEngine/models"
 )
 
-func GetTravelData(stopId int) (map[int][]byte, error) {
+func GetTravelData(stopId int) (map[int]models.TravelData, error) {
 	var config Config = *GetConfig()
 	psqlconn := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
@@ -38,7 +37,7 @@ func GetTravelData(stopId int) (map[int][]byte, error) {
 	CheckError(err)
 	defer rows.Close()
 
-	travelDataMap := make(map[int][]byte)
+	travelDataMap := make(map[int]models.TravelData)
 
 	for rows.Next() {
 		var toStopId, travelTime int
@@ -47,13 +46,11 @@ func GetTravelData(stopId int) (map[int][]byte, error) {
 		err := rows.Scan(&toStopId, &travelTime, pq.Array(&routeStops))
 		CheckError(err)
 
-		travelDataMapJson, err := json.Marshal(models.TravelData{
+		travelDataMap[toStopId] = models.TravelData{
 			Id:         toStopId,
 			TravelTime: travelTime,
 			Path:       routeStops,
-		})
-
-		travelDataMap[toStopId] = travelDataMapJson
+		}
 	}
 
 	if err := rows.Err(); err != nil {
@@ -70,7 +67,7 @@ func CheckError(err error) {
 	}
 }
 
-func GetStopsDetails() (map[string][]byte, error){
+func GetStopsDetails() (map[string]models.StopData, error) {
 	var config Config = *GetConfig()
 	psqlconn := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
@@ -96,25 +93,23 @@ func GetStopsDetails() (map[string][]byte, error){
 	CheckError(err)
 	defer rows.Close()
 
-	stopsDetailsMap := make(map[string][]byte)
+	stopsDetailsMap := make(map[string]models.StopData)
 
 	for rows.Next() {
 		var stopId string
-    var stopCode string
-    var stopName string
-    var stopLoc []byte
+		var stopCode string
+		var stopName string
+		var stopLoc []byte
 
 		err := rows.Scan(&stopId, &stopCode, &stopName, &stopLoc)
 		CheckError(err)
 
-		stopsDetailsMapJson, err := json.Marshal(models.StopData{
-      Id: stopId,
-      Code: stopCode,
-      Name: stopName,
-      Location: stopLoc,
-		})
-
-		stopsDetailsMap[stopId] = stopsDetailsMapJson
+		stopsDetailsMap[stopId] = models.StopData{
+			Id:       stopId,
+			Code:     stopCode,
+			Name:     stopName,
+			Location: stopLoc,
+		}
 	}
 
 	if err := rows.Err(); err != nil {

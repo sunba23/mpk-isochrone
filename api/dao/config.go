@@ -12,7 +12,7 @@ type Config struct {
 
 func GetConfig() *Config {
 	return &Config{
-		Host:     "localhost",
+		Host:     os.Getenv("PG_HOST"),
 		Port:     5432,
 		User:     os.Getenv("PG_USER"),
 		Password: os.Getenv("PG_PASSWORD"),
