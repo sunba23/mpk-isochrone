@@ -29,7 +29,10 @@ const IsochronicMap: React.FC = () => {
     try {
       const travelData = await fetchTravelData(stopId);
 
-      const times: Record<string, number> = {};
+      const times: Record<string, number> = {
+        [stopId.toString()]: 0,
+      };
+
       Object.values(travelData.stop_id_travel_data_map).forEach((data) => {
         times[data.id.toString()] = data.travel_time;
       });
@@ -55,8 +58,8 @@ const IsochronicMap: React.FC = () => {
     Object.entries(markersRef.current).forEach(([stopId, marker]) => {
       if (markerColors[stopId]) {
         marker.setStyle({
-          fillColor: markerColors[stopId],
-          radius: stopId === startStopId ? 8 : 5,
+          fillColor: stopId === startStopId ? "#FF00FF" : markerColors[stopId],
+          radius: stopId === 5,
           color: stopId === startStopId ? "#FF00FF" : "#000000",
         });
       }
@@ -67,7 +70,7 @@ const IsochronicMap: React.FC = () => {
     <div className="main">
       <div style={{ width: "80vw" }}>
         <h1 className="text-2xl font-bold mb-4 map-title text-center">
-          MPK Wrocław isochrone map
+          Wrocław public transport isochrone/travel visualizer
         </h1>
         <div
           style={{
@@ -78,7 +81,7 @@ const IsochronicMap: React.FC = () => {
           }}
         >
           <MapContainer
-            center={[51.06, 17.0159]}
+            center={[51.108, 17.028]}
             zoom={12}
             style={{ height: "100%", width: "100%" }}
           >
@@ -86,10 +89,12 @@ const IsochronicMap: React.FC = () => {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
-            <MapLegend
-              minTime={Math.min(...Object.values(travelTimes)) || 0}
-              maxTime={Math.max(...Object.values(travelTimes)) || 3600}
-            />
+            {Object.keys(travelTimes).length > 0 && (
+              <MapLegend
+                minTime={Math.min(...Object.values(travelTimes)) || 0}
+                maxTime={Math.max(...Object.values(travelTimes)) || 3600}
+              />
+            )}
             {stops.map((stop) => (
               <CircleMarker
                 key={stop.id}
@@ -101,6 +106,7 @@ const IsochronicMap: React.FC = () => {
                 fillOpacity={0.8}
                 color="#000000"
                 fillColor={markerColors[stop.id] || "#CCCCCC"}
+                weight={1}
                 ref={(marker) => {
                   if (marker) {
                     markersRef.current[stop.id] = marker;
@@ -122,7 +128,7 @@ const IsochronicMap: React.FC = () => {
                   <button
                     onClick={() => handleGenerateIsochrone(parseInt(stop.id))}
                   >
-                    Isochrone from here
+                    Start Here
                   </button>
                 </Popup>
               </CircleMarker>
@@ -131,9 +137,10 @@ const IsochronicMap: React.FC = () => {
         </div>
         <p className="mt-4 text-gray-700 leading-relaxed map-desc">
           This map visualizes travel times for Wrocław public transport. To
-          start, <b>click on a stop</b> and then <b>Isochrone from here</b>. The
-          travel times are <b>best case scenario</b> (e.g. instant transfer). If
-          you like it, star the project on{" "}
+          start, <b>click on a stop</b> and then <b>Start from here</b>. The
+          travel times are <b>best case scenario</b> (e.g. instant transfer). To
+          see the stops needed to get somewhere, <b>click on another stop</b>{" "}
+          and then <b>Finish here</b>. If you like it, star the project on{" "}
           <a href="https://github.com/sunba23/mpk-isochrone">GitHub</a>!
         </p>
       </div>

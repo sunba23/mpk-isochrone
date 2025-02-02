@@ -32,6 +32,13 @@ const MapLegend: React.FC<MapLegendProps> = ({ minTime, maxTime }) => {
       let legendContent =
         '<h3 style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">Travel Time</h3>';
 
+      legendContent += `
+          <div style="display: flex; align-items: center; margin-bottom: 4px;">
+            <div style="width: 20px; height: 20px; background-color: #FF00FF; margin-right: 8px; border: 1px solid #ccc;"></div>
+            <span style="font-size: 12px;">START</span>
+          </div>
+        `;
+
       legendColors.forEach((item, index) => {
         const startTime =
           index === 0
