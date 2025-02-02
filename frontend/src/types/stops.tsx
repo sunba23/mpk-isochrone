@@ -1,4 +1,4 @@
-import * as wkx from 'wkx';
+import * as wkx from "wkx";
 
 export interface StopData {
   id: string;
@@ -12,18 +12,22 @@ export interface StopData {
 
 export interface StopsDetailsResponse {
   code: number;
-  stop_details_map: Record<string, Omit<StopData, 'stop_location'> & { stop_location: string }>;
+  stop_details_map: Record<
+    string,
+    Omit<StopData, "stop_location"> & { stop_location: string }
+  >;
 }
 
-export function parseLocation(base64Location: string): { latitude: number; longitude: number } {
-  const buffer = Buffer.from(base64Location, 'base64');
-  
+export function parseLocation(base64Location: string): {
+  latitude: number;
+  longitude: number;
+} {
+  const buffer = Buffer.from(base64Location, "base64");
+
   const geometry = wkx.Geometry.parse(buffer);
 
-  console.log("geometry: ", geometry)
-  
   return {
     latitude: geometry.y,
-    longitude: geometry.x
+    longitude: geometry.x,
   };
 }

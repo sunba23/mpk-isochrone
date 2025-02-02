@@ -1,0 +1,22 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+
+.map-container {
+  font-family: "Poppins", sans-serif;
+}
+
+.map-title {
+  font-family: "Poppins", sans-serif;
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+.map-desc {
+  font-family: "Poppins", sans-serif;
+  color: #4a5568;
+}
+
+.main {
+  max-width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}

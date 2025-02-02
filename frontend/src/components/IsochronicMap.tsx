@@ -1,23 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-import { fetchStops } from '../services/apiService';
-import { StopData } from '../types/stops';
-
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-});
+import React, { useState, useEffect, useRef } from "react";
+import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import { fetchStops, fetchTravelData } from "../services/apiService";
+import { StopData } from "../types/stops";
+import { getMarkerColor } from "../utils/color";
+import MapLegend from "./MapLegend";
 
 const IsochronicMap: React.FC = () => {
   const [stops, setStops] = useState<StopData[]>([]);
+  const [markerColors, setMarkerColors] = useState<Record<string, string>>({});
+  const [travelTimes, setTravelTimes] = useState<Record<string, number>>({});
+  const [startStopId, setStartStopId] = useState<string | null>(null);
+  const markersRef = useRef<Record<string, L.CircleMarker>>({});
 
   useEffect(() => {
     const loadStops = async () => {
@@ -25,35 +19,125 @@ const IsochronicMap: React.FC = () => {
         const fetchedStops = await fetchStops();
         setStops(fetchedStops);
       } catch (error) {
-        console.error('Error loading stops:', error);
+        console.error("Error loading stops:", error);
       }
     };
-
     loadStops();
   }, []);
 
+  const handleGenerateIsochrone = async (stopId: number) => {
+    try {
+      const travelData = await fetchTravelData(stopId);
+
+      const times: Record<string, number> = {};
+      Object.values(travelData.stop_id_travel_data_map).forEach((data) => {
+        times[data.id.toString()] = data.travel_time;
+      });
+
+      const travelTimesArray = Object.values(times);
+      const minTime = Math.min(...travelTimesArray);
+      const maxTime = Math.max(...travelTimesArray);
+
+      const colors: Record<string, string> = {};
+      Object.entries(times).forEach(([stopId, time]) => {
+        colors[stopId] = getMarkerColor(time, minTime, maxTime);
+      });
+
+      setTravelTimes(times);
+      setMarkerColors(colors);
+      setStartStopId(stopId.toString());
+    } catch (error) {
+      console.error("Error generating isochrone:", error);
+    }
+  };
+
+  useEffect(() => {
+    Object.entries(markersRef.current).forEach(([stopId, marker]) => {
+      if (markerColors[stopId]) {
+        marker.setStyle({
+          fillColor: markerColors[stopId],
+          radius: stopId === startStopId ? 8 : 5,
+          color: stopId === startStopId ? "#FF00FF" : "#000000",
+        });
+      }
+    });
+  }, [markerColors, startStopId]);
+
   return (
-    <MapContainer 
-      center={stops.length ? [stops[0].stop_location.latitude, stops[0].stop_location.longitude] : [0, 0]} 
-      zoom={13} 
-      style={{ height: '100vh', width: '100%' }}
-    >
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      />
-      {stops.map(stop => (
-        <Marker 
-          key={stop.id}
-          position={[stop.stop_location.latitude, stop.stop_location.longitude]}
+    <div className="main">
+      <div style={{ width: "80vw" }}>
+        <h1 className="text-2xl font-bold mb-4 map-title text-center">
+          MPK Wrocław isochrone map
+        </h1>
+        <div
+          style={{
+            height: "80vh",
+            width: "100%",
+            borderRadius: "20px",
+            overflow: "hidden",
+          }}
         >
-          <Popup>
-            {stop.stop_name}<br />
-            Code: {stop.stop_code}
-          </Popup>
-        </Marker>
-      ))}
-    </MapContainer>
+          <MapContainer
+            center={[51.06, 17.0159]}
+            zoom={12}
+            style={{ height: "100%", width: "100%" }}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            />
+            <MapLegend
+              minTime={Math.min(...Object.values(travelTimes)) || 0}
+              maxTime={Math.max(...Object.values(travelTimes)) || 3600}
+            />
+            {stops.map((stop) => (
+              <CircleMarker
+                key={stop.id}
+                center={[
+                  stop.stop_location.latitude,
+                  stop.stop_location.longitude,
+                ]}
+                radius={5}
+                fillOpacity={0.8}
+                color="#000000"
+                fillColor={markerColors[stop.id] || "#CCCCCC"}
+                ref={(marker) => {
+                  if (marker) {
+                    markersRef.current[stop.id] = marker;
+                  }
+                }}
+              >
+                <Popup>
+                  {stop.stop_name}
+                  <br />
+                  Code: {stop.stop_code}
+                  <br />
+                  {travelTimes[stop.id] && (
+                    <>
+                      Travel time: ~{Math.round(travelTimes[stop.id] / 60)}{" "}
+                      minutes
+                      <br />
+                    </>
+                  )}
+                  <button
+                    onClick={() => handleGenerateIsochrone(parseInt(stop.id))}
+                  >
+                    Isochrone from here
+                  </button>
+                </Popup>
+              </CircleMarker>
+            ))}
+          </MapContainer>
+        </div>
+        <p className="mt-4 text-gray-700 leading-relaxed map-desc">
+          This map visualizes travel times for Wrocław public transport. To
+          start, <b>click on a stop</b> and then <b>Isochrone from here</b>. The
+          travel times are <b>best case scenario</b> (e.g. instant transfer). If
+          you like it, star the project on{" "}
+          <a href="https://github.com/sunba23/mpk-isochrone">GitHub</a>!
+        </p>
+      </div>
+    </div>
   );
 };
 

@@ -1,4 +1,5 @@
 import { StopsDetailsResponse, parseLocation } from "../types/stops";
+import { TravelDataResponse } from "../types/traveldata";
 
 export const fetchStops = async (): Promise<StopData[]> => {
   try {
@@ -8,7 +9,6 @@ export const fetchStops = async (): Promise<StopData[]> => {
         "Content-Type": "application/json",
       },
     });
-    console.log("Response status:", response.status);
     const rawText = await response.text();
     if (!response.ok) {
       throw new Error("Network response was not ok");
@@ -21,6 +21,29 @@ export const fetchStops = async (): Promise<StopData[]> => {
     }));
   } catch (error) {
     console.error("Full fetch error: ", error);
+    throw error;
+  }
+};
+
+export const fetchTravelData = async (
+  stopId: number,
+): Promise<TravelDataResponse> => {
+  try {
+    const response = await fetch(
+      `http://localhost:8080/traveldata?stop_id=${stopId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching travel data:", error);
     throw error;
   }
 };
