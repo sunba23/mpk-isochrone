@@ -16,7 +16,28 @@
 }
 
 .main {
-  max-width: fit-content;
+  width: 100%;
   margin-left: auto;
   margin-right: auto;
+  padding: 20px;
+}
+
+.important-marker {
+  transition: all 0.2s ease-in-out;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
+}
+
+.important-marker:hover {
+  transform: scale(1.2);
+  z-index: 9999 !important;
+}
+
+button svg {
+  vertical-align: middle;
+}
+
+.map-desc svg {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 0.2em;
 }
