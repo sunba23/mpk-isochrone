@@ -81,14 +81,7 @@ const IsochronicMap: React.FC = () => {
       if (!endStopId) {
         // Isochrone mode
         const isStart = stopId === startStopId;
-        marker.setStyle({
-          fillColor: isStart ? "#FF00FF" : markerColors[stopId] || "#CCCCCC",
-          radius: isStart ? 7 : 5,
-          color: "#000000",
-          fillOpacity: isStart ? 0.95 : 0.85,
-          weight: isStart ? 3 : 1,
-          zIndexOffset: isStart ? 1000 : 0,
-        });
+        marker.setStyle({ fillColor: isStart ? "#FF00FF" : markerColors[stopId] || "#CCCCCC", radius: isStart ? 7 : 5, color: "#000000", fillOpacity: isStart ? 0.95 : 0.85, weight: isStart ? 3 : 1, zIndexOffset: isStart ? 1000 : 0,});
       } else {
         // Finish mode
         const isStart = stopId === startStopId;
@@ -96,43 +89,15 @@ const IsochronicMap: React.FC = () => {
         const isInPath = pathStops.includes(Number(stopId));
 
         // uninmportant stops
-        let style = {
-          fillColor: markerColors[stopId] || "#CCCCCC",
-          radius: 4,
-          color: "rgba(0,0,0,0.3)",
-          weight: 0.5,
-          fillOpacity: 0.3,
-          zIndexOffset: 0,
-        };
+        let style = { fillColor: markerColors[stopId] || "#CCCCCC", radius: 4, color: "rgba(0,0,0,0.3)", weight: 0.5, fillOpacity: 0.3, zIndexOffset: 500 };
 
         // important stops
         if (isStart) {
-          style = {
-            fillColor: "#FF00FF",
-            radius: 9,
-            color: "#000000",
-            weight: 3,
-            fillOpacity: 0.95,
-            zIndexOffset: 3000,
-          };
+          style = { fillColor: "#FF00FF", radius: 9, color: "#000000", weight: 3, fillOpacity: 0.95, zIndexOffset: 3000 };
         } else if (isEnd) {
-          style = {
-            fillColor: "#00FF00",
-            radius: 8,
-            color: "#000000",
-            weight: 3,
-            fillOpacity: 0.9,
-            zIndexOffset: 2000,
-          };
+          style = { fillColor: "#00FF00", radius: 8, color: "#000000", weight: 3, fillOpacity: 0.9, zIndexOffset: 2000 };
         } else if (isInPath) {
-          style = {
-            fillColor: markerColors[stopId] || "#CCCCCC",
-            radius: 7,
-            color: "#000000",
-            weight: 2,
-            fillOpacity: 0.85,
-            zIndexOffset: 1000,
-          };
+          style = { fillColor: markerColors[stopId] || "#CCCCCC", radius: 7, color: "#000000", weight: 2, fillOpacity: 0.85, zIndexOffset: 1000 };
         }
 
         marker.setStyle(style);
@@ -152,20 +117,11 @@ const IsochronicMap: React.FC = () => {
   return (
     <div className="main">
       <div
-        style={{
-          width: "80vw",
-          maxWidth: "1200px",
-          margin: "0 auto",
-        }}
+        style={{ width: "80vw", maxWidth: "1200px", margin: "0 auto" }}
       >
         <h1
           className="map-title text-center"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-          }}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
         >
           Wrocław public transport isochrone/travel visualizer
           <b>
@@ -174,12 +130,7 @@ const IsochronicMap: React.FC = () => {
           </b>
         </h1>
         <div
-          style={{
-            height: "80vh",
-            width: "100%",
-            borderRadius: "20px",
-            overflow: "hidden",
-          }}
+          style={{ height: "80vh", width: "100%", borderRadius: "20px", overflow: "hidden" }}
         >
           <MapContainer
             center={[51.108, 17.028]}

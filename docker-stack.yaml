@@ -1,0 +1,64 @@
+services:
+  api:
+    image: ghcr.io/sunba23/mpkiso-api:latest
+    ports:
+      - "8080:8080"
+    environment:
+      REDIS_URL: redis:6379
+    secrets:
+      - REDIS_PASSWORD
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        order: start-first
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+    networks:
+      - mpkisonet
+
+  redis:
+    image: redis:7.4
+    ports:
+      - "6379:6379"
+    secrets:
+      - REDIS_PASSWORD
+    volumes:
+      - redis-data:/data
+    command: sh -c "redis-server --bind 0.0.0.0 --maxmemory 500mb --requirepass $$(cat /run/secrets/REDIS_PASSWORD)"
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+    networks:
+      - mpkisonet
+
+  frontend:
+    image: ghcr.io/sunba23/mpkiso-frontend:latest
+    ports:
+      - "3000:3000"
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        order: start-first
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+    networks:
+      - mpkisonet
+
+networks:
+  mpkisonet:
+    driver: overlay
+
+volumes:
+  redis-data:
+    driver: local
+
+secrets:
+  REDIS_PASSWORD:
+    external: true
