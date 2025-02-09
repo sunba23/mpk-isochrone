@@ -3,7 +3,7 @@ import { TravelDataResponse } from "../types/traveldata";
 
 export const fetchStops = async (): Promise<StopData[]> => {
   try {
-    const response = await fetch("http://localhost:8080/stops/details", {
+    const response = await fetch("/api/stops/details", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -29,15 +29,12 @@ export const fetchTravelData = async (
   stopId: number,
 ): Promise<TravelDataResponse> => {
   try {
-    const response = await fetch(
-      `http://localhost:8080/traveldata?stop_id=${stopId}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+    const response = await fetch(`/api/traveldata?stop_id=${stopId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+    });
     if (!response.ok) {
       throw new Error("Network response was not ok");
     }

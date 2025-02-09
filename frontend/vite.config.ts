@@ -4,15 +4,6 @@ import { nodePolyfills } from "vite-plugin-node-polyfills";
 import path from "path";
 
 export default defineConfig({
-  server: {
-    proxy: {
-      '/stops': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-        rewrite: (path) => path
-      }
-    }
-  },
   plugins: [
     react(),
     nodePolyfills({

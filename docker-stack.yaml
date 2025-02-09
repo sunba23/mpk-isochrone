@@ -1,4 +1,30 @@
 services:
+  traefik:
+    image: traefik:v2.10
+    ports:
+      - "7080:80"
+      - "7443:443"
+    command:
+      - "--providers.docker.swarmMode=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=mpkisonet"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=franeksu@gmail.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-certificates:/letsencrypt
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+    networks:
+      - mpkisonet
+
   api:
     image: ghcr.io/sunba23/mpkiso-api:latest
     ports:
@@ -7,6 +33,10 @@ services:
       REDIS_URL: redis:6379
     secrets:
       - REDIS_PASSWORD
+      - PG_HOST
+      - PG_DBNAME
+      - PG_USER
+      - PG_PASSWORD
     deploy:
       replicas: 2
       update_config:
@@ -15,6 +45,14 @@ services:
         failure_action: rollback
       restart_policy:
         condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.api.rule=Host(`city.sunba.dev`) && PathPrefix(`/api`)"
+        - "traefik.http.routers.api.entrypoints=websecure"
+        - "traefik.http.routers.api.tls.certresolver=myresolver"
+        - "traefik.http.services.api.loadbalancer.server.port=8080"
+        - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api"
+        - "traefik.http.routers.api.middlewares=api-stripprefix"
     networks:
       - mpkisonet
 
@@ -39,7 +77,9 @@ services:
   frontend:
     image: ghcr.io/sunba23/mpkiso-frontend:latest
     ports:
-      - "3000:3000"
+      - target: 2137
+        published: 2137
+        mode: host
     deploy:
       replicas: 2
       update_config:
@@ -48,6 +88,12 @@ services:
         failure_action: rollback
       restart_policy:
         condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.frontend.rule=Host(`city.sunba.dev`)"
+        - "traefik.http.routers.frontend.entrypoints=websecure"
+        - "traefik.http.routers.frontend.tls.certresolver=myresolver"
+        - "traefik.http.services.frontend.loadbalancer.server.port=2137"
     networks:
       - mpkisonet
 
@@ -55,10 +101,19 @@ networks:
   mpkisonet:
     driver: overlay
 
-volumes:
-  redis-data:
-    driver: local
-
 secrets:
   REDIS_PASSWORD:
     external: true
+  PG_PASSWORD:
+    external: true
+  PG_USER:
+    external: true
+  PG_DBNAME:
+    external: true
+  PG_HOST:
+    external: true
+
+volumes:
+  redis-data:
+    driver: local
+  traefik-certificates:
