@@ -2,17 +2,30 @@ services:
   traefik:
     image: traefik:v2.10
     ports:
-      - "7080:80"
-      - "7443:443"
+      - "80:80"
+      - "443:443"
     command:
       - "--providers.docker.swarmMode=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=mpkisonet"
+      - "--providers.docker.network=mpk-iso_mpkisonet"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--entrypoints.websecure.http.tls.certresolver=myresolver"
+      - "--tls.stores.default.defaultGeneratedCert.resolver=myresolver"
+      - "--tls.stores.default.defaultGeneratedCert.domain.main=city.sunba.dev"
+      - "--certificatesresolvers.myresolver.acme.dnschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.dnschallenge.provider=cloudflare"
+      - "--certificatesresolvers.myresolver.acme.dnschallenge.delaybeforecheck=10"
+      - "--certificatesresolvers.myresolver.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53"
+      - "--certificatesresolvers.myresolver.acme.dnschallenge.disablepropagationcheck=false"
+      - "--certificatesresolvers.myresolver.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
       - "--certificatesresolvers.myresolver.acme.email=franeksu@gmail.com"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "--log.level=DEBUG"
+    secrets:
+      - cloudflare_api_token
+    environment:
+      - CLOUDFLARE_DNS_API_TOKEN_FILE=/run/secrets/cloudflare_api_token
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-certificates:/letsencrypt
@@ -27,8 +40,6 @@ services:
 
   api:
     image: ghcr.io/sunba23/mpkiso-api:latest
-    ports:
-      - "8080:8080"
     environment:
       REDIS_URL: redis:6379
     secrets:
@@ -53,13 +64,12 @@ services:
         - "traefik.http.services.api.loadbalancer.server.port=8080"
         - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api"
         - "traefik.http.routers.api.middlewares=api-stripprefix"
+        - "traefik.http.routers.api.tls=true"
     networks:
       - mpkisonet
 
   redis:
     image: redis:7.4
-    ports:
-      - "6379:6379"
     secrets:
       - REDIS_PASSWORD
     volumes:
@@ -76,10 +86,6 @@ services:
 
   frontend:
     image: ghcr.io/sunba23/mpkiso-frontend:latest
-    ports:
-      - target: 2137
-        published: 2137
-        mode: host
     deploy:
       replicas: 2
       update_config:
@@ -94,6 +100,7 @@ services:
         - "traefik.http.routers.frontend.entrypoints=websecure"
         - "traefik.http.routers.frontend.tls.certresolver=myresolver"
         - "traefik.http.services.frontend.loadbalancer.server.port=2137"
+        - "traefik.http.routers.frontend.tls=true"
     networks:
       - mpkisonet
 
@@ -111,6 +118,8 @@ secrets:
   PG_DBNAME:
     external: true
   PG_HOST:
+    external: true
+  cloudflare_api_token:
     external: true
 
 volumes:
