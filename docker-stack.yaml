@@ -3,6 +3,8 @@ services:
     image: ghcr.io/sunba23/mpkiso-api:latest
     environment:
       REDIS_URL: redis:6379
+    ports:
+      - "8080:8080"
     secrets:
       - REDIS_PASSWORD
       - PG_HOST
