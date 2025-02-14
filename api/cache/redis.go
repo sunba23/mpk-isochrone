@@ -2,7 +2,6 @@ package cache
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"sync"
@@ -37,9 +36,9 @@ func GetClient() *redis.Client {
 func getRedisPassword() string {
 	secretPath := "/run/secrets/REDIS_PASSWORD"
 
-  _, err := os.Stat(secretPath)
+	_, err := os.Stat(secretPath)
 
-  if os.IsNotExist(err){
+	if os.IsNotExist(err) {
 		password := getEnvOrDefault("REDIS_PASSWORD", "")
 		return password
 	} else {
