@@ -27,7 +27,8 @@ services:
   frontend:
     build: frontend/
     ports:
-      - 2137:80
+      - 80:7080
+      - 443:7443
     networks:
       - mpkisonet
     depends_on:
