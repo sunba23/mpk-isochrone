@@ -2,10 +2,12 @@ package cache
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"github.com/redis/go-redis/v9"
 	"os"
 	"sync"
+
+	"github.com/redis/go-redis/v9"
 )
 
 var (
@@ -14,10 +16,12 @@ var (
 )
 
 func GetClient() *redis.Client {
+	password := getRedisPassword()
+
 	once.Do(func() {
 		rdb = redis.NewClient(&redis.Options{
 			Addr:     getEnvOrDefault("REDIS_URL", "redis:6379"),
-			Password: getEnvOrDefault("REDIS_PASSWORD", ""),
+			Password: password,
 			DB:       0,
 		})
 
@@ -27,6 +31,25 @@ func GetClient() *redis.Client {
 		}
 	})
 	return rdb
+}
+
+// to support both env vars and docker secrets
+func getRedisPassword() string {
+	secretPath := "/run/secrets/REDIS_PASSWORD"
+
+  _, err := os.Stat(secretPath)
+
+  if os.IsNotExist(err){
+		password := getEnvOrDefault("REDIS_PASSWORD", "")
+		return password
+	} else {
+		passwordBytes, err := os.ReadFile(secretPath)
+		if err != nil {
+			panic(fmt.Sprintf("Failed to read Redis password from secret file: %v", err))
+		}
+		password := string(passwordBytes)
+		return password
+	}
 }
 
 func getEnvOrDefault(key, defaultValue string) string {
